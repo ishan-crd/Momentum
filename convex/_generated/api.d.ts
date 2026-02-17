@@ -14,6 +14,7 @@ import type * as goals from "../goals.js";
 import type * as habits from "../habits.js";
 import type * as http from "../http.js";
 import type * as notes from "../notes.js";
+import type * as seedDemo from "../seedDemo.js";
 import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
 
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   habits: typeof habits;
   http: typeof http;
   notes: typeof notes;
+  seedDemo: typeof seedDemo;
   tasks: typeof tasks;
   users: typeof users;
 }>;

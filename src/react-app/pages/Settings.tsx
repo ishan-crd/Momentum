@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card } from "@/react-app/components/ui/card";
 import { Label } from "@/react-app/components/ui/label";
 import { Switch } from "@/react-app/components/ui/switch";
@@ -11,11 +12,16 @@ import {
 import { Input } from "@/react-app/components/ui/input";
 import { Button } from "@/react-app/components/ui/button";
 import { Separator } from "@/react-app/components/ui/separator";
-import { Bell, Moon, Timer, Target, User } from "lucide-react";
+import { Bell, Moon, Timer, Target, User, Sparkles } from "lucide-react";
 import { useTheme } from "@/react-app/contexts/ThemeContext";
+import { useMutation } from "convex/react";
+import { api } from "convex/_generated/api";
+import { toast } from "sonner";
 
 export default function Settings() {
   const { theme, toggleTheme } = useTheme();
+  const seedDemo = useMutation(api.seedDemo.run);
+  const [seeding, setSeeding] = useState(false);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-8">
@@ -173,6 +179,36 @@ export default function Settings() {
             </p>
           </div>
         </div>
+      </Card>
+
+      {/* Demo data */}
+      <Card className="p-6 bg-card border-border shadow-sm">
+        <div className="flex items-center gap-2 mb-6">
+          <Sparkles className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold text-foreground">Demo data</h2>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Load sample tasks, goals, habits, and notes (over a week of data) for demos or testing.
+        </p>
+        <Button
+          variant="outline"
+          disabled={seeding}
+          onClick={async () => {
+            setSeeding(true);
+            try {
+              const result = await seedDemo();
+              toast.success(
+                `Loaded ${result.tasks} tasks, ${result.goals} goals, ${result.habits} habits, ${result.notes} notes.`
+              );
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : "Failed to load demo data");
+            } finally {
+              setSeeding(false);
+            }
+          }}
+        >
+          {seeding ? "Loading…" : "Load demo data"}
+        </Button>
       </Card>
 
       {/* Account */}
