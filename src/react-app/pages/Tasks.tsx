@@ -1,5 +1,5 @@
 import { Card } from "@/react-app/components/ui/card";
-import { Circle, CheckCircle2, Clock, Plus, MoreVertical, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { Clock, Plus, MoreVertical, MoreHorizontal, Pencil, Sparkles, Trash2, Search } from "lucide-react";
 import { cn } from "@/react-app/lib/utils";
 import { useState } from "react";
 import { Input } from "@/react-app/components/ui/input";
@@ -85,18 +85,20 @@ function SortableTask({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const getPriorityColor = (priority?: string) => {
+  const getPriorityPillClass = (priority?: string) => {
     switch (priority) {
       case "high":
-        return "bg-red-50 text-red-500";
+        return "bg-destructive text-destructive-foreground";
       case "medium":
-        return "bg-yellow-50 text-yellow-600";
+        return "bg-muted text-muted-foreground";
       case "low":
-        return "bg-blue-50 text-blue-500";
+        return "bg-secondary text-secondary-foreground";
       default:
-        return "";
+        return "bg-muted text-muted-foreground";
     }
   };
+
+  const isCompleted = task.status === "completed";
 
   return (
     <div
@@ -105,113 +107,121 @@ function SortableTask({
       {...attributes}
       {...listeners}
       className={cn(
-        "group cursor-grab rounded-lg border bg-background p-4 transition-all active:cursor-grabbing",
-        "hover:border-foreground/20 hover:shadow-md"
+        "group rounded-xl border p-4 transition-all",
+        isCompleted
+          ? "cursor-default border-border bg-muted/50"
+          : "cursor-grab active:cursor-grabbing border-border bg-card hover:shadow-md"
       )}
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <p className="min-w-0 flex-1 text-sm text-foreground">{task.title}</p>
-        <div className="flex shrink-0 items-center gap-1">
-          {task.priority && (
-            <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-xs font-medium",
-                getPriorityColor(task.priority)
+      <div className="flex items-center justify-between gap-2 mb-2">
+        {task.priority ? (
+          <span
+            className={cn(
+              "rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+              getPriorityPillClass(task.priority)
+            )}
+          >
+            {task.priority}
+          </span>
+        ) : (
+          <span />
+        )}
+        {(onBreakDown ?? onEdit ?? onDelete) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onEdit && (
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onEdit(task); }}>
+                  <Pencil className="h-4 w-4" /> Edit
+                </DropdownMenuItem>
               )}
-            >
-              {task.priority}
-            </span>
-          )}
-          {(onBreakDown || onEdit || onDelete) && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="h-7 w-7 opacity-70 hover:opacity-100"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                  <span className="sr-only">Actions</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {onEdit && (
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      onEdit(task);
-                    }}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-                )}
-                {onBreakDown && (
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      onBreakDown(task.title);
-                    }}
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Break down
-                  </DropdownMenuItem>
-                )}
-                {onDelete && (
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      onDelete(task._id);
-                    }}
-                    variant="destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
+              {onBreakDown && (
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onBreakDown(task.title); }}>
+                  <Sparkles className="h-4 w-4" /> Break down
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem variant="destructive" onSelect={(e) => { e.preventDefault(); onDelete(task._id); }}>
+                  <Trash2 className="h-4 w-4" /> Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
+      <h4 className="text-[14px] font-semibold text-foreground leading-snug">
+        {task.title}
+      </h4>
       {task.dueDate && (
-        <p className="text-xs text-muted-foreground">
-          Due: {new Date(task.dueDate).toLocaleDateString()}
+        <p className="mt-1.5 text-[12px] text-muted-foreground">
+          Due {new Date(task.dueDate).toLocaleDateString()}
         </p>
       )}
+      <div className="mt-3 flex items-center gap-1.5 text-[12px] text-muted-foreground">
+        <Clock className="h-3.5 w-3.5 shrink-0" />
+        {isCompleted
+          ? "Completed"
+          : task.dueDate
+            ? new Date(task.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+            : "No due date"}
+      </div>
     </div>
   );
 }
+
+const columnDotColors: Record<string, string> = {
+  todo: "bg-blue-500",
+  "in-progress": "bg-violet-500",
+  completed: "bg-green-500",
+};
 
 function DroppableColumn({
   id,
   children,
   label,
-  icon: Icon,
   count,
 }: {
   id: string;
   children: React.ReactNode;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
   count: number;
 }) {
   const { setNodeRef } = useDroppable({ id });
+  const dotColor = columnDotColors[id] ?? "bg-muted-foreground";
 
   return (
     <div ref={setNodeRef} className="flex flex-col">
-      <Card className="border-border bg-card flex-1 shadow-sm">
-        <div className="border-border border-b p-4">
-          <div className="flex items-center gap-2">
-            <Icon className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-medium text-foreground">{label}</h3>
-            <span className="ml-auto text-xs text-muted-foreground">{count}</span>
+      <div className="flex flex-1 flex-col rounded-xl border border-border bg-card overflow-hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={cn("h-2 w-2 shrink-0 rounded-full", dotColor)} />
+            <h3 className="text-[15px] font-bold text-foreground truncate">{label}</h3>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+              {count}
+            </span>
+            <button
+              type="button"
+              className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              aria-label="Column options"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
           </div>
         </div>
-        <div className="min-h-[500px] space-y-3 p-4">{children}</div>
-      </Card>
+        <div className="min-h-[480px] space-y-3 p-4">{children}</div>
+      </div>
     </div>
   );
 }
@@ -240,6 +250,7 @@ export default function Tasks() {
     "low" | "medium" | "high" | undefined
   >(undefined);
   const [editDueDate, setEditDueDate] = useState("");
+  const [taskSearchQuery, setTaskSearchQuery] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -248,13 +259,19 @@ export default function Tasks() {
   );
 
   const columns = [
-    { id: "todo", label: "To Do", icon: Circle },
-    { id: "in-progress", label: "In Progress", icon: Clock },
-    { id: "completed", label: "Completed", icon: CheckCircle2 },
+    { id: "todo", label: "To Do" },
+    { id: "in-progress", label: "In Progress" },
+    { id: "completed", label: "Completed" },
   ] as const;
 
+  const filteredTasks = taskSearchQuery.trim()
+    ? tasks.filter((t) =>
+        t.title.toLowerCase().includes(taskSearchQuery.toLowerCase())
+      )
+    : tasks;
+
   const getTasksByStatus = (status: TaskStatus) =>
-    tasks.filter((task) => task.status === status);
+    filteredTasks.filter((task) => task.status === status);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as Id<"tasks">);
@@ -351,22 +368,39 @@ export default function Tasks() {
   };
 
   const activeTask = activeId ? tasks.find((t) => t._id === activeId) : null;
+  const activeCount = filteredTasks.filter((t) => t.status !== "completed").length;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="mb-2 text-3xl font-semibold text-foreground">Tasks</h1>
-          <p className="text-muted-foreground">Manage your actionable work</p>
+    <div className="min-h-full bg-background">
+      <div className="mx-auto max-w-7xl space-y-6 p-6">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-[22px] font-bold text-foreground">Focus Board</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Managing {activeCount} active task{activeCount !== 1 ? "s" : ""} across 3 stages
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="search"
+                placeholder="Search tasks..."
+                value={taskSearchQuery}
+                onChange={(e) => setTaskSearchQuery(e.target.value)}
+                className="h-10 w-64 rounded-lg border border-input bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                aria-label="Search tasks"
+              />
+            </div>
+            <Button onClick={() => setShowAddTask(!showAddTask)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Task
+            </Button>
+          </div>
         </div>
-        <Button onClick={() => setShowAddTask(!showAddTask)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Task
-        </Button>
-      </div>
 
-      {showAddTask && (
-        <Card className="border-border bg-card p-4 shadow-sm">
+        {showAddTask && (
+          <Card className="p-4">
           <div className="space-y-4">
             <div>
               <Label htmlFor="task-title">Task Title</Label>
@@ -438,16 +472,14 @@ export default function Tasks() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-5">
           {columns.map((column) => {
-            const Icon = column.icon;
             const columnTasks = getTasksByStatus(column.id);
             return (
               <DroppableColumn
                 key={column.id}
                 id={column.id}
                 label={column.label}
-                icon={Icon}
                 count={columnTasks.length}
               >
                 <SortableContext
@@ -465,7 +497,7 @@ export default function Tasks() {
                   ))}
                 </SortableContext>
                 {columnTasks.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-border/50 p-8 text-center">
+                  <div className="rounded-xl border border-dashed border-border p-8 text-center">
                     <p className="text-sm text-muted-foreground">No tasks</p>
                   </div>
                 )}
@@ -473,11 +505,44 @@ export default function Tasks() {
             );
           })}
         </div>
+        <div className="mt-4 flex justify-start">
+          <button
+            type="button"
+            className="flex items-center gap-2 rounded-lg border border-dashed border-border bg-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground hover:border-primary/50 hover:text-foreground"
+            aria-label="Add column"
+          >
+            <Plus className="h-4 w-4" />
+            Add Column
+          </button>
+        </div>
 
         <DragOverlay>
           {activeTask ? (
-            <div className="rounded-lg border bg-background p-4 shadow-lg">
-              <p className="text-sm text-foreground">{activeTask.title}</p>
+            <div className="rounded-xl border border-border bg-card p-4 shadow-xl">
+              {activeTask.priority != null && (
+                <span
+                  className={cn(
+                    "rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                    activeTask.priority === "high" && "bg-destructive text-destructive-foreground",
+                    activeTask.priority === "medium" && "bg-muted text-muted-foreground",
+                    activeTask.priority === "low" && "bg-secondary text-secondary-foreground"
+                  )}
+                >
+                  {activeTask.priority}
+                </span>
+              )}
+              <h4 className="mt-2 text-[14px] font-semibold text-foreground">{activeTask.title}</h4>
+              {activeTask.dueDate && (
+                <p className="mt-1.5 text-[12px] text-muted-foreground">
+                  Due {new Date(activeTask.dueDate).toLocaleDateString()}
+                </p>
+              )}
+              <div className="mt-3 flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                <Clock className="h-3.5 w-3.5 shrink-0" />
+                {activeTask.dueDate
+                  ? new Date(activeTask.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+                  : "No due date"}
+              </div>
             </div>
           ) : null}
         </DragOverlay>
@@ -559,6 +624,7 @@ export default function Tasks() {
         onAddTask={handleAddSuggestedTask}
         onAddAll={handleAddAllSuggested}
       />
+      </div>
     </div>
   );
 }
