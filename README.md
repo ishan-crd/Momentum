@@ -25,6 +25,15 @@ A calm, minimal productivity app for everyday clarity and momentum.
    ```
    Open http://localhost:5173. Use **Sign up** to create an account, then sign in. All data (notes, habits, tasks, goals) is stored in Convex and scoped to your user.
 
+### Deploy to Vercel
+
+1. Push your repo and import the project in [Vercel](https://vercel.com).
+2. **Set environment variable** (required or the app will show a setup message instead of loading):
+   - **`VITE_CONVEX_URL`** = your Convex deployment URL (e.g. `https://your-deployment.convex.cloud`).
+   - In Vercel: Project → Settings → Environment Variables. Add for Production (and Preview if you want).
+3. The build uses **Output Directory** `dist/client` (see `vercel.json`). If the site is blank, confirm in Vercel → Project → Settings → General that the build output is **`dist/client`** (or that `vercel.json` is applied).
+4. Redeploy after adding the variable.
+
 ### Tech
 
 - **Frontend:** React 19, Vite 7, Tailwind, Radix UI
