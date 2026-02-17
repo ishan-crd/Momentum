@@ -5,9 +5,8 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import { mochaPlugins } from "@getmocha/vite-plugins";
 
 export default defineConfig({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 	  plugins: [
-	    ...mochaPlugins(process.env as any),
+	    ...mochaPlugins(process.env as Record<string, string | undefined>),
 	    react(),
 	    cloudflare({
 	      // auxiliaryWorkers only on Mocha; omit for local dev so Vite can start
