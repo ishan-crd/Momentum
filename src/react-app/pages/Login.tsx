@@ -11,6 +11,23 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const getFriendlyAuthError = (err: unknown): string => {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/InvalidSecret|Invalid credentials|wrong password|invalid password/i.test(msg)) {
+      return "Wrong email or password.";
+    }
+    if (/User not found|account not found|no account/i.test(msg)) {
+      return "Wrong email or password.";
+    }
+    if (/already exists|already registered|email in use/i.test(msg)) {
+      return "An account with this email already exists. Sign in instead.";
+    }
+    if (/auth|signIn|sign in|password|credentials/i.test(msg)) {
+      return "Wrong email or password.";
+    }
+    return "Something went wrong. Please try again.";
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -21,7 +38,7 @@ export default function Login() {
     try {
       await signIn("password", formData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(getFriendlyAuthError(err));
     } finally {
       setLoading(false);
     }
