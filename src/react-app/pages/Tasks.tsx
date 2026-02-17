@@ -16,13 +16,12 @@ import {
   DndContext,
   DragOverlay,
   closestCenter,
-  DragStartEvent,
-  DragOverEvent,
   PointerSensor,
   useSensor,
   useSensors,
   useDroppable,
 } from "@dnd-kit/core";
+import type { DragStartEvent, DragOverEvent } from "@dnd-kit/core";
 import {
   SortableContext,
   useSortable,

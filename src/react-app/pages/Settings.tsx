@@ -1,23 +1,34 @@
-import { Card } from '@/react-app/components/ui/card';
-import { Label } from '@/react-app/components/ui/label';
-import { Switch } from '@/react-app/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/react-app/components/ui/select';
-import { Input } from '@/react-app/components/ui/input';
-import { Button } from '@/react-app/components/ui/button';
-import { Separator } from '@/react-app/components/ui/separator';
-import { Bell, Moon, Timer, Target, User } from 'lucide-react';
+import { Card } from "@/react-app/components/ui/card";
+import { Label } from "@/react-app/components/ui/label";
+import { Switch } from "@/react-app/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/react-app/components/ui/select";
+import { Input } from "@/react-app/components/ui/input";
+import { Button } from "@/react-app/components/ui/button";
+import { Separator } from "@/react-app/components/ui/separator";
+import { Bell, Moon, Timer, Target, User } from "lucide-react";
+import { useTheme } from "@/react-app/contexts/ThemeContext";
 
 export default function Settings() {
+  const { theme, toggleTheme } = useTheme();
+
   return (
-    <div className="max-w-3xl mx-auto p-8 space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6 p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-foreground mb-2">Settings</h1>
-        <p className="text-muted-foreground">Personalize your Focus experience</p>
+        <h1 className="mb-2 text-3xl font-semibold text-foreground">Settings</h1>
+        <p className="text-muted-foreground">
+          Personalize your Focus experience
+        </p>
       </div>
 
       {/* Appearance */}
-      <Card className="p-6 bg-card border-border shadow-sm">
-        <div className="flex items-center gap-2 mb-6">
+      <Card className="border-border bg-card p-6 shadow-sm">
+        <div className="mb-6 flex items-center gap-2">
           <Moon className="h-5 w-5 text-muted-foreground" />
           <h2 className="text-lg font-semibold text-foreground">Appearance</h2>
         </div>
@@ -25,14 +36,21 @@ export default function Settings() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="dark-mode" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="dark-mode"
+                className="text-sm font-medium text-foreground"
+              >
                 Dark Mode
               </Label>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Switch between light and dark theme
               </p>
             </div>
-            <Switch id="dark-mode" />
+            <Switch
+              id="dark-mode"
+              checked={theme === "dark"}
+              onCheckedChange={toggleTheme}
+            />
           </div>
         </div>
       </Card>
