@@ -1,15 +1,21 @@
-import { Plus } from 'lucide-react';
-import { Card } from '@/react-app/components/ui/card';
-import { Input } from '@/react-app/components/ui/input';
-import { useState } from 'react';
+import { Plus } from "lucide-react";
+import { Card } from "@/react-app/components/ui/card";
+import { Input } from "@/react-app/components/ui/input";
+import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "convex/_generated/api";
 
 export default function QuickAdd() {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState("");
+  const createTask = useMutation(api.tasks.create);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && value.trim()) {
-      // Handle adding task
-      setValue('');
+    if (e.key === "Enter" && value.trim()) {
+      void createTask({
+        title: value.trim(),
+        status: "todo",
+      });
+      setValue("");
     }
   };
 

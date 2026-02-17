@@ -1,66 +1,64 @@
-import { useState } from 'react';
-import TopThreeTasks from '@/react-app/components/TopThreeTasks';
-import TaskBoard from '@/react-app/components/TaskBoard';
-import QuickAdd from '@/react-app/components/QuickAdd';
-import WeeklyStats from '@/react-app/components/WeeklyStats';
-
-// Stub data for initial UI
-const initialTopTasks = [
-  { id: 1, title: 'Complete quarterly review presentation', completed: false },
-  { id: 2, title: 'Schedule team 1-on-1 meetings', completed: true },
-  { id: 3, title: 'Review and respond to client feedback', completed: false },
-];
-
-const initialBoardTasks = [
-  { id: 4, title: 'Update project documentation', status: 'todo' as const },
-  { id: 5, title: 'Research new productivity tools', status: 'todo' as const },
-  { id: 6, title: 'Write blog post draft', status: 'in-progress' as const },
-  { id: 7, title: 'Review code PRs', status: 'in-progress' as const },
-  { id: 8, title: 'Morning meditation', status: 'completed' as const },
-  { id: 9, title: 'Read 30 minutes', status: 'completed' as const },
-];
+import TopThreeTasks from "@/react-app/components/TopThreeTasks";
+import TaskBoard from "@/react-app/components/TaskBoard";
+import QuickAdd from "@/react-app/components/QuickAdd";
+import WeeklyStats from "@/react-app/components/WeeklyStats";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 
 export default function Today() {
-  const [topTasks, setTopTasks] = useState(initialTopTasks);
-  const [boardTasks] = useState(initialBoardTasks);
+  const topThree = useQuery(api.tasks.listTopThree) ?? [];
+  const allTasks = useQuery(api.tasks.list) ?? [];
+  const updateTask = useMutation(api.tasks.update);
 
-  const handleTopTaskToggle = (id: number) => {
-    setTopTasks(tasks =>
-      tasks.map(task =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
+  const topTasks = topThree.map((t) => ({
+    id: t._id,
+    title: t.title,
+    completed: t.status === "completed",
+  }));
+
+  const boardTasks = allTasks.map((t) => ({
+    id: t._id,
+    title: t.title,
+    status: t.status,
+  }));
+
+  const handleTopTaskToggle = (id: string) => {
+    const task = topThree.find((t) => t._id === id);
+    if (!task) return;
+    const newStatus =
+      task.status === "completed" ? "in-progress" : "completed";
+    void updateTask({ id: id as Id<"tasks">, status: newStatus });
   };
 
+  const completedToday =
+    allTasks.filter((t) => t.status === "completed").length;
+  const totalTasks = allTasks.length;
+
   return (
-    <div className="max-w-6xl mx-auto p-8 space-y-6">
-      {/* Header */}
+    <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-foreground mb-2">Today</h1>
+        <h1 className="mb-2 text-3xl font-semibold text-foreground">Today</h1>
         <p className="text-muted-foreground">
-          {new Date().toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+          {new Date().toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
           })}
         </p>
       </div>
 
-      {/* Weekly Stats */}
-      <WeeklyStats 
-        completedTasks={5} 
-        goalProgress={68} 
-        longestStreak={12} 
+      <WeeklyStats
+        completedTasks={completedToday}
+        goalProgress={totalTasks ? Math.round((completedToday / totalTasks) * 100) : 0}
+        longestStreak={0}
       />
 
-      {/* Top 3 Tasks */}
       <TopThreeTasks tasks={topTasks} onToggle={handleTopTaskToggle} />
 
-      {/* Quick Add */}
       <QuickAdd />
 
-      {/* Task Board */}
       <TaskBoard tasks={boardTasks} />
     </div>
   );

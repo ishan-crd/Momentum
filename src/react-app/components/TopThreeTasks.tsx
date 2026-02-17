@@ -2,15 +2,15 @@ import { Circle, CheckCircle2 } from 'lucide-react';
 import { Card } from '@/react-app/components/ui/card';
 import { cn } from '@/react-app/lib/utils';
 
-interface Task {
-  id: number;
+export interface Task {
+  id: string;
   title: string;
   completed: boolean;
 }
 
 interface TopThreeTasksProps {
   tasks: Task[];
-  onToggle: (id: number) => void;
+  onToggle: (id: string) => void;
 }
 
 export default function TopThreeTasks({ tasks, onToggle }: TopThreeTasksProps) {

@@ -2,8 +2,8 @@ import { Card } from '@/react-app/components/ui/card';
 import { Circle, CheckCircle2, Clock } from 'lucide-react';
 import { cn } from '@/react-app/lib/utils';
 
-interface Task {
-  id: number;
+export interface Task {
+  id: string;
   title: string;
   status: 'todo' | 'in-progress' | 'completed';
 }
