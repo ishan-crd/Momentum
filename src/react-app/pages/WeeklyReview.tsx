@@ -1,13 +1,17 @@
+import { useState } from "react";
 import { Card } from "@/react-app/components/ui/card";
+import { Button } from "@/react-app/components/ui/button";
 import {
   TrendingUp,
   Target,
   CheckCircle2,
   Flame,
   Calendar,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { Textarea } from "@/react-app/components/ui/textarea";
-import { useQuery } from "convex/react";
+import { useQuery, useAction } from "convex/react";
 import { api } from "convex/_generated/api";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -37,6 +41,14 @@ export default function WeeklyReview() {
   const tasks = useQuery(api.tasks.list) ?? [];
   const habits = useQuery(api.habits.list) ?? [];
   const goals = useQuery(api.goals.list) ?? [];
+  const analyzeReflectionAction = useAction(api.ai.analyzeReflection);
+
+  const [wentWell, setWentWell] = useState("");
+  const [couldImprove, setCouldImprove] = useState("");
+  const [focusNextWeek, setFocusNextWeek] = useState("");
+  const [analyzeLoading, setAnalyzeLoading] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
   const { weekStart, weekEnd, monday } = getWeekBounds();
   const sunday = new Date(monday);
@@ -90,6 +102,24 @@ export default function WeeklyReview() {
     day: "numeric",
     year: "numeric",
   })}`;
+
+  const handleAnalyze = async () => {
+    setAnalyzeError(null);
+    setAnalysisResult(null);
+    setAnalyzeLoading(true);
+    try {
+      const result = await analyzeReflectionAction({
+        wentWell,
+        couldImprove,
+        focusNextWeek,
+      });
+      setAnalysisResult(result);
+    } catch (e) {
+      setAnalyzeError(e instanceof Error ? e.message : "Analysis failed.");
+    } finally {
+      setAnalyzeLoading(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-8">
@@ -227,6 +257,8 @@ export default function WeeklyReview() {
               id="reflection-went-well"
               placeholder="Share your wins and positive moments..."
               className="min-h-[100px] resize-none"
+              value={wentWell}
+              onChange={(e) => setWentWell(e.target.value)}
             />
           </div>
           <div>
@@ -240,6 +272,8 @@ export default function WeeklyReview() {
               id="reflection-improve"
               placeholder="Identify areas for growth and adjustment..."
               className="min-h-[100px] resize-none"
+              value={couldImprove}
+              onChange={(e) => setCouldImprove(e.target.value)}
             />
           </div>
           <div>
@@ -253,8 +287,40 @@ export default function WeeklyReview() {
               id="reflection-focus"
               placeholder="Set intentions and priorities..."
               className="min-h-[100px] resize-none"
+              value={focusNextWeek}
+              onChange={(e) => setFocusNextWeek(e.target.value)}
             />
           </div>
+          <Button
+            onClick={() => void handleAnalyze()}
+            disabled={analyzeLoading}
+            className="gap-2"
+          >
+            {analyzeLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Analyzing…
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                Analyze
+              </>
+            )}
+          </Button>
+          {analyzeError && (
+            <p className="text-sm text-destructive">{analyzeError}</p>
+          )}
+          {analysisResult && (
+            <div className="rounded-lg border border-border bg-muted/50 p-4">
+              <p className="text-sm font-medium text-muted-foreground mb-2">
+                Final review
+              </p>
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                {analysisResult}
+              </p>
+            </div>
+          )}
         </div>
       </Card>
     </div>

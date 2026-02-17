@@ -39,7 +39,7 @@ export default function Sidebar() {
             <h1 className="text-lg font-semibold text-sidebar-foreground">
               Momentum
             </h1>
-            <p className="text-xs text-primary/90">PREMIUM ACCESS</p>
+            {/* <p className="text-xs text-primary/90">PREMIUM ACCESS</p> */}
           </div>
         </div>
       </div>
