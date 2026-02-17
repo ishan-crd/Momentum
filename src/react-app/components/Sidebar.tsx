@@ -69,7 +69,7 @@ export default function Sidebar() {
       <div className="flex items-center justify-between border-b border-sidebar-border p-4">
         {!collapsed && (
           <h1 className="text-xl font-semibold text-sidebar-foreground">
-            Focus
+            Momentum
           </h1>
         )}
         <Button

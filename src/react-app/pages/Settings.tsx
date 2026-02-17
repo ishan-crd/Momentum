@@ -22,7 +22,7 @@ export default function Settings() {
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-semibold text-foreground">Settings</h1>
         <p className="text-muted-foreground">
-          Personalize your Focus experience
+          Personalize your Momentum experience
         </p>
       </div>
 

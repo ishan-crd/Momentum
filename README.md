@@ -17,6 +17,7 @@ A calm, minimal productivity app for everyday clarity and momentum.
      VITE_CONVEX_URL=https://your-deployment.convex.cloud
      ```
    - (Optional) For password auth, set JWT keys in the [Convex dashboard](https://dashboard.convex.dev) → Settings → Environment Variables. Run `node node_modules/@convex-dev/auth/scripts/generateKeys.mjs` and add `JWT_PRIVATE_KEY` and `JWKS`.
+   - For AI features (break down tasks/goals, today’s focus, suggest next tasks), get a **free** [Google Gemini API key](https://aistudio.google.com/app/apikey) and add **`GEMINI_API_KEY`** in Convex Dashboard → Settings → Environment Variables. No credit card required.
 
 3. **Run the app**
    ```bash

@@ -1,6 +1,13 @@
 import { Card } from "@/react-app/components/ui/card";
 import { Progress } from "@/react-app/components/ui/progress";
-import { Target, Plus, Calendar, X } from "lucide-react";
+import { Target, Plus, Calendar, X, ListTodo, MoreVertical } from "lucide-react";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/react-app/components/ui/dropdown-menu";
 import { Button } from "@/react-app/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/react-app/components/ui/tabs";
 import { useState } from "react";
@@ -14,7 +21,8 @@ import {
   SelectValue,
 } from "@/react-app/components/ui/select";
 import { Checkbox } from "@/react-app/components/ui/checkbox";
-import { useQuery, useMutation } from "convex/react";
+import SuggestedTasksDialog from "@/react-app/components/SuggestedTasksDialog";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 
@@ -47,9 +55,11 @@ function calculateProgress(
 function GoalCard({
   goal,
   tasks,
+  onSuggestTasks,
 }: {
   goal: GoalDoc;
   tasks: TaskDoc[];
+  onSuggestTasks?: (title: string) => void;
 }) {
   const currentProgress = calculateProgress(goal.linkedTaskIds, tasks);
   const linkedTasks = tasks.filter((t) => goal.linkedTaskIds.includes(t._id));
@@ -57,8 +67,8 @@ function GoalCard({
 
   return (
     <Card className="border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
-      <div className="mb-4 flex items-start justify-between">
-        <div className="flex-1">
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
           <h3 className="mb-1 text-base font-medium text-foreground">{goal.title}</h3>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="capitalize">{goal.category}</span>
@@ -68,7 +78,22 @@ function GoalCard({
             </span>
           </div>
         </div>
-        <Target className="h-5 w-5 text-muted-foreground" />
+        {onSuggestTasks && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm" className="h-8 w-8 shrink-0">
+                <MoreVertical className="h-4 w-4" />
+                <span className="sr-only">Actions</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => onSuggestTasks(goal.title)}>
+                <ListTodo className="h-4 w-4" />
+                Suggest tasks
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
       <div className="space-y-3">
         <div>
@@ -117,6 +142,8 @@ export default function Goals() {
   const goals = useQuery(api.goals.list) ?? [];
   const tasks = useQuery(api.tasks.list) ?? [];
   const createGoal = useMutation(api.goals.create);
+  const createTask = useMutation(api.tasks.create);
+  const suggestGoalTasksAction = useAction(api.ai.suggestGoalTasks);
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState("");
   const [newGoalCategory, setNewGoalCategory] = useState<
@@ -125,6 +152,11 @@ export default function Goals() {
   const [newGoalTimeframe, setNewGoalTimeframe] = useState<"weekly" | "monthly">("weekly");
   const [newGoalTargetDate, setNewGoalTargetDate] = useState("");
   const [selectedTaskIds, setSelectedTaskIds] = useState<Id<"tasks">[]>([]);
+  const [suggestedOpen, setSuggestedOpen] = useState(false);
+  const [suggestedDialogTitle, setSuggestedDialogTitle] = useState("");
+  const [suggestedTasks, setSuggestedTasks] = useState<string[]>([]);
+  const [suggestedLoading, setSuggestedLoading] = useState(false);
+  const [suggestedError, setSuggestedError] = useState<string | null>(null);
 
   const handleToggleTask = (taskId: Id<"tasks">) => {
     setSelectedTaskIds((prev) =>
@@ -152,6 +184,37 @@ export default function Goals() {
     setNewGoalTargetDate("");
     setSelectedTaskIds([]);
     setShowAddGoal(false);
+  };
+
+  const openSuggestTasks = async (goalTitle: string) => {
+    setSuggestedDialogTitle(`Suggest tasks: ${goalTitle}`);
+    setSuggestedOpen(true);
+    setSuggestedTasks([]);
+    setSuggestedError(null);
+    setSuggestedLoading(true);
+    try {
+      const result = await suggestGoalTasksAction({ goalTitle });
+      setSuggestedTasks(result ?? []);
+    } catch (e) {
+      setSuggestedTasks([]);
+      setSuggestedError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setSuggestedLoading(false);
+    }
+  };
+
+  const handleAddSuggestedTask = (title: string) => {
+    void createTask({ title, status: "todo" });
+    setSuggestedTasks((prev) => prev.filter((t) => t !== title));
+    toast.success("Task has been added");
+  };
+
+  const handleAddAllSuggested = () => {
+    suggestedTasks.forEach((title) => {
+      void createTask({ title, status: "todo" });
+    });
+    setSuggestedTasks([]);
+    toast.success("Tasks have been added");
   };
 
   const weeklyGoals = goals.filter((g) => g.timeframe === "weekly");
@@ -318,7 +381,12 @@ export default function Goals() {
               </h2>
               <div className="grid grid-cols-2 gap-4">
                 {weeklyGoals.map((goal) => (
-                  <GoalCard key={goal._id} goal={goal} tasks={tasks} />
+                  <GoalCard
+                    key={goal._id}
+                    goal={goal}
+                    tasks={tasks}
+                    onSuggestTasks={openSuggestTasks}
+                  />
                 ))}
               </div>
             </div>
@@ -330,7 +398,12 @@ export default function Goals() {
               </h2>
               <div className="grid grid-cols-2 gap-4">
                 {monthlyGoals.map((goal) => (
-                  <GoalCard key={goal._id} goal={goal} tasks={tasks} />
+                  <GoalCard
+                    key={goal._id}
+                    goal={goal}
+                    tasks={tasks}
+                    onSuggestTasks={openSuggestTasks}
+                  />
                 ))}
               </div>
             </div>
@@ -347,14 +420,24 @@ export default function Goals() {
         <TabsContent value="weekly">
           <div className="grid grid-cols-2 gap-4">
             {weeklyGoals.map((goal) => (
-              <GoalCard key={goal._id} goal={goal} tasks={tasks} />
+              <GoalCard
+                key={goal._id}
+                goal={goal}
+                tasks={tasks}
+                onSuggestTasks={openSuggestTasks}
+              />
             ))}
           </div>
         </TabsContent>
         <TabsContent value="monthly">
           <div className="grid grid-cols-2 gap-4">
             {monthlyGoals.map((goal) => (
-              <GoalCard key={goal._id} goal={goal} tasks={tasks} />
+              <GoalCard
+                key={goal._id}
+                goal={goal}
+                tasks={tasks}
+                onSuggestTasks={openSuggestTasks}
+              />
             ))}
           </div>
         </TabsContent>
@@ -363,7 +446,12 @@ export default function Goals() {
             {goals
               .filter((g) => g.category === "personal")
               .map((goal) => (
-                <GoalCard key={goal._id} goal={goal} tasks={tasks} />
+                <GoalCard
+                  key={goal._id}
+                  goal={goal}
+                  tasks={tasks}
+                  onSuggestTasks={openSuggestTasks}
+                />
               ))}
           </div>
         </TabsContent>
@@ -372,11 +460,27 @@ export default function Goals() {
             {goals
               .filter((g) => g.category === "professional")
               .map((goal) => (
-                <GoalCard key={goal._id} goal={goal} tasks={tasks} />
+                <GoalCard
+                  key={goal._id}
+                  goal={goal}
+                  tasks={tasks}
+                  onSuggestTasks={openSuggestTasks}
+                />
               ))}
           </div>
         </TabsContent>
       </Tabs>
+
+      <SuggestedTasksDialog
+        open={suggestedOpen}
+        onOpenChange={setSuggestedOpen}
+        title={suggestedDialogTitle}
+        suggestedTasks={suggestedTasks}
+        loading={suggestedLoading}
+        error={suggestedError}
+        onAddTask={handleAddSuggestedTask}
+        onAddAll={handleAddAllSuggested}
+      />
     </div>
   );
 }

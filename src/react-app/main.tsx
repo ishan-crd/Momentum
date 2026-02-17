@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { Toaster } from "sonner";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
 import "@/react-app/index.css";
@@ -11,6 +12,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ConvexAuthProvider client={convex}>
       <App />
+      <Toaster position="bottom-center" richColors />
     </ConvexAuthProvider>
   </StrictMode>
 );
